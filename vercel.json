@@ -1,0 +1,12 @@
+{
+  "buildCommand": "npm install",
+  "env": {
+    "TEST_EMAIL": "@TEST_EMAIL"
+  },
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "*/1 * * * *"
+    }
+  ]
+}
