@@ -78,7 +78,7 @@ async function executeCode(token) {
       }
     );
 
-    writeLog("✓ Code executed");
+    writeLog("✓ Code executed: " + JSON.stringify(response.data));
     return true;
   } catch (error) {
     if (error.response?.status === 401) {
@@ -109,7 +109,7 @@ async function createRoom(token) {
       }
     );
 
-    writeLog("✓ Room created: " + response.data.id);
+    writeLog("✓ Room created: " + JSON.stringify(response.data));
     return true;
   } catch (error) {
     if (error.response?.status === 401) {

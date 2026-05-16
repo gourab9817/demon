@@ -67,6 +67,7 @@ async function executeCode() {
 
     writeLog("✓ Code executed successfully");
     writeLog("Status: " + response.status);
+    writeLog("Response: " + JSON.stringify(response.data));
   } catch (error) {
     if (error.response && error.response.status === 401) {
       writeLog("⚠ Token expired, logging in again...");
@@ -110,7 +111,7 @@ async function createRoom() {
 
     writeLog("✓ Room created successfully");
     writeLog("Status: " + response.status);
-    writeLog("Room ID: " + response.data.id);
+    writeLog("Response: " + JSON.stringify(response.data));
   } catch (error) {
     if (error.response && error.response.status === 401) {
       writeLog("⚠ Token expired during room creation, logging in again...");
