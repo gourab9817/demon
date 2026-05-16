@@ -1,0 +1,45 @@
+# dependencies
+node_modules/
+
+# env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# macOS
+.DS_Store
+
+# linux
+*~
+
+# vscode
+.vscode/
+
+# jetbrains
+.idea/
+
+# vercel
+.vercel/
+
+# build
+dist/
+build/
+
+# coverage
+coverage/
+
+# cache
+.cache/
+
+# misc
+*.pem
