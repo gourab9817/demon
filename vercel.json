@@ -7,15 +7,7 @@
   },
   "crons": [
     {
-      "path": "/api/cron",
-      "schedule": "*/1 * * * *"
-    },
-    {
-      "path": "/api/keepalive",
-      "schedule": "*/1 * * * *"
-    },
-    {
-      "path": "/api/loadtest",
+      "path": "/api/orchestrator",
       "schedule": "*/1 * * * *"
     }
   ]

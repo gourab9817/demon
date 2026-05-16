@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "node api/cron.js",
+    "start": "node api/orchestrator.js",
+    "cron": "node api/cron.js",
     "execute": "node api/execute.js",
     "login": "node api/login.js",
     "keepalive": "node api/keepalive.js",
     "loadtest": "node api/loadtest.js",
-    "dev": "concurrently \"npm run keepalive\" \"npm run start\""
+    "dev": "concurrently \"npm run start\" \"npm run cron\""
   },
   "dependencies": {
     "axios": "^1.8.4",
