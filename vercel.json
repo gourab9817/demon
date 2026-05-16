@@ -1,12 +1,19 @@
 {
   "buildCommand": "npm install",
   "env": {
-    "TEST_EMAIL": "@TEST_EMAIL"
+    "TEST_EMAIL": "@TEST_EMAIL",
+    "LOGIN_EMAIL": "@LOGIN_EMAIL",
+    "LOGIN_PASSWORD": "@LOGIN_PASSWORD"
   },
   "crons": [
     {
       "path": "/api/cron",
       "schedule": "*/1 * * * *"
+    },
+    {
+      "path": "/api/keepalive",
+      "schedule": "*/1 * * * *"
     }
   ]
 }
+
