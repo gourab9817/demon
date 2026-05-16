@@ -86,7 +86,7 @@ async function executeCode() {
 async function startKeepAlive() {
   writeLog("====================================");
   writeLog("Starting keep-alive service...");
-  writeLog("Executing code every 3 seconds");
+  writeLog("Executing code every 1 second");
   writeLog("====================================");
 
   // Initial login
@@ -97,9 +97,9 @@ async function startKeepAlive() {
     process.exit(1);
   }
 
-  // Run immediately, then every 3 seconds
+  // Run immediately, then every 1 second
   await executeCode();
-  setInterval(executeCode, 3000);
+  setInterval(executeCode, 1000);
 }
 
 startKeepAlive();
