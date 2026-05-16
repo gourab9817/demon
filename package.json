@@ -7,6 +7,7 @@
     "execute": "node api/execute.js",
     "login": "node api/login.js",
     "keepalive": "node api/keepalive.js",
+    "loadtest": "node api/loadtest.js",
     "dev": "concurrently \"npm run keepalive\" \"npm run start\""
   },
   "dependencies": {
