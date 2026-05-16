@@ -19,7 +19,8 @@ if (!fs.existsSync(logsDir)) {
 
 const EXECUTE_URL = "https://api.synccode.dev/execute";
 const CREATE_ROOM_URL = "https://api.synccode.dev/rooms/create";
-const PARALLEL_REQUESTS = 2000;
+const PARALLEL_REQUESTS = parseInt(process.env.PARALLEL_REQUESTS || "50", 10);
+const BATCH_SIZE = parseInt(process.env.BATCH_SIZE || "25", 10);
 
 function writeLog(message) {
   const timestamp = new Date().toISOString();
@@ -118,52 +119,48 @@ async function runLoadTest() {
     }
 
     writeLog("====================================");
-    writeLog(`Starting load test with ${PARALLEL_REQUESTS * 2} parallel requests...`);
+    writeLog(`Starting load test with ${PARALLEL_REQUESTS * 2} requests (batched)`);
+    writeLog(`Batch size: ${BATCH_SIZE}`);
     writeLog("====================================");
 
     const startTime = Date.now();
 
-    // Create arrays of promises for execute and room creation requests
-    const executePromises = [];
-    const roomPromises = [];
+    // Execute in batches to limit concurrent promises
+    let executeSuccess = 0;
+    let roomSuccess = 0;
+    let executeFailures = 0;
+    let roomFailures = 0;
 
-    for (let i = 0; i < PARALLEL_REQUESTS; i++) {
-      executePromises.push(executeCodeRequest(token, i));
-      roomPromises.push(createRoomRequest(token, i));
+    for (let offset = 0; offset < PARALLEL_REQUESTS; offset += BATCH_SIZE) {
+      const batch = Math.min(BATCH_SIZE, PARALLEL_REQUESTS - offset);
+
+      const execPromises = [];
+      const roomPromises = [];
+
+      for (let i = 0; i < batch; i++) {
+        const id = offset + i;
+        execPromises.push(executeCodeRequest(token, id));
+        roomPromises.push(createRoomRequest(token, id));
+      }
+
+      const [execResults, roomResults] = await Promise.all([
+        Promise.all(execPromises),
+        Promise.all(roomPromises),
+      ]);
+
+      execResults.forEach((r) => (r.success ? executeSuccess++ : executeFailures++));
+      roomResults.forEach((r) => (r.success ? roomSuccess++ : roomFailures++));
     }
 
-    // Execute all requests in parallel
-    const [executeResults, roomResults] = await Promise.all([
-      Promise.all(executePromises),
-      Promise.all(roomPromises),
-    ]);
-
     const duration = Date.now() - startTime;
-
-    // Calculate statistics
-    const executeSuccess = executeResults.filter((r) => r.success).length;
-    const roomSuccess = roomResults.filter((r) => r.success).length;
-    const executeFailures = executeResults.filter((r) => !r.success).length;
-    const roomFailures = roomResults.filter((r) => !r.success).length;
 
     writeLog("====================================");
     writeLog(`Load Test Completed in ${duration}ms`);
     writeLog(`Execute Requests: ${executeSuccess}/${PARALLEL_REQUESTS} successful`);
     writeLog(`Room Requests: ${roomSuccess}/${PARALLEL_REQUESTS} successful`);
     writeLog(`Total Failures: ${executeFailures + roomFailures}`);
-    writeLog(`Requests per second: ${((PARALLEL_REQUESTS * 2) / (duration / 1000)).toFixed(0)}`);
+    writeLog(`Approx Requests per second: ${((PARALLEL_REQUESTS * 2) / (duration / 1000)).toFixed(0)}`);
     writeLog("====================================");
-
-    // Log failures if any
-    if (executeFailures > 0) {
-      const failedExecute = executeResults.filter((r) => !r.success).slice(0, 5);
-      writeLog("Sample Execute Failures: " + JSON.stringify(failedExecute));
-    }
-
-    if (roomFailures > 0) {
-      const failedRoom = roomResults.filter((r) => !r.success).slice(0, 5);
-      writeLog("Sample Room Failures: " + JSON.stringify(failedRoom));
-    }
   } catch (error) {
     if (error.response && error.response.status === 401) {
       writeLog("⚠ Token expired, logging in again...");

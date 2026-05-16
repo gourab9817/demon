@@ -123,55 +123,69 @@ async function runOrchestrator() {
         return { service: "room-creation", success: false };
       });
 
-    // 4. Load Test
+    // 4. Load Test (batched, configurable to avoid OOM)
+    const PARALLEL_REQUESTS = parseInt(process.env.PARALLEL_REQUESTS || "50", 10);
+    const BATCH_SIZE = parseInt(process.env.BATCH_SIZE || "25", 10);
+
     const loadTestPromise = (async () => {
       try {
-        const executeRequests = [];
-        const roomRequests = [];
+        let executeSuccess = 0;
+        let roomSuccess = 0;
+        let executeFailures = 0;
+        let roomFailures = 0;
 
-        for (let i = 0; i < 2000; i++) {
-          executeRequests.push(
-            axios.post(
-              "https://api.synccode.dev/execute",
-              { code: "console.log('Load test');", language: "javascript" },
-              {
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                  Origin: "https://www.synccode.dev",
-                  Referer: "https://www.synccode.dev/",
-                },
-                timeout: 5000,
-              }
-            )
-          );
+        writeLog(`Starting load test: ${PARALLEL_REQUESTS * 2} requests (batched ${BATCH_SIZE})`);
 
-          roomRequests.push(
-            axios.post(
-              "https://api.synccode.dev/rooms/create",
-              { language: "javascript", name: `loadtest-${i}` },
-              {
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                  Origin: "https://www.synccode.dev",
-                  Referer: "https://www.synccode.dev/",
-                },
-                timeout: 5000,
-              }
-            )
-          );
+        for (let offset = 0; offset < PARALLEL_REQUESTS; offset += BATCH_SIZE) {
+          const batch = Math.min(BATCH_SIZE, PARALLEL_REQUESTS - offset);
+          const execPromises = [];
+          const roomPromises = [];
+
+          for (let i = 0; i < batch; i++) {
+            const id = offset + i;
+            execPromises.push(
+              axios.post(
+                "https://api.synccode.dev/execute",
+                { code: "console.log('Load test');", language: "javascript" },
+                {
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                    Origin: "https://www.synccode.dev",
+                    Referer: "https://www.synccode.dev/",
+                  },
+                  timeout: 5000,
+                }
+              )
+            );
+
+            roomPromises.push(
+              axios.post(
+                "https://api.synccode.dev/rooms/create",
+                { language: "javascript", name: `loadtest-${id}` },
+                {
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                    Origin: "https://www.synccode.dev",
+                    Referer: "https://www.synccode.dev/",
+                  },
+                  timeout: 5000,
+                }
+              )
+            );
+          }
+
+          const [execResults, roomResults] = await Promise.all([
+            Promise.allSettled(execPromises),
+            Promise.allSettled(roomPromises),
+          ]);
+
+          execResults.forEach((r) => (r.status === "fulfilled" ? executeSuccess++ : executeFailures++));
+          roomResults.forEach((r) => (r.status === "fulfilled" ? roomSuccess++ : roomFailures++));
         }
 
-        const [executeResults, roomResults] = await Promise.all([
-          Promise.allSettled(executeRequests),
-          Promise.allSettled(roomRequests),
-        ]);
-
-        const executeSuccess = executeResults.filter((r) => r.status === "fulfilled").length;
-        const roomSuccess = roomResults.filter((r) => r.status === "fulfilled").length;
-
-        writeLog(`✓ Load test: Execute ${executeSuccess}/2000, Room ${roomSuccess}/2000`);
+        writeLog(`✓ Load test: Execute ${executeSuccess}/${PARALLEL_REQUESTS}, Room ${roomSuccess}/${PARALLEL_REQUESTS}`);
         return { service: "load-test", success: true, stats: { executeSuccess, roomSuccess } };
       } catch (error) {
         writeLog("❌ Load test error: " + error.message);
