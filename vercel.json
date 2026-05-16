@@ -5,7 +5,6 @@
     "LOGIN_EMAIL": "@LOGIN_EMAIL",
     "LOGIN_PASSWORD": "@LOGIN_PASSWORD"
   },
-  "public": "public",
   "rewrites": [
     {
       "source": "/",
