@@ -18,6 +18,7 @@ if (!fs.existsSync(logsDir)) {
 }
 
 const EXECUTE_URL = "https://api.synccode.dev/execute";
+const CREATE_ROOM_URL = "https://api.synccode.dev/rooms/create";
 
 function writeLog(message) {
   const timestamp = new Date().toISOString();
@@ -76,9 +77,53 @@ async function executeCode() {
         writeLog("Failed to refresh token: " + loginError.message);
       }
     } else if (error.response) {
-      writeLog("❌ Error: " + error.response.status + " - " + JSON.stringify(error.response.data));
+      writeLog("❌ Execute Error: " + error.response.status + " - " + JSON.stringify(error.response.data));
     } else {
-      writeLog("❌ Error: " + error.message);
+      writeLog("❌ Execute Error: " + error.message);
+    }
+  }
+}
+
+async function createRoom() {
+  try {
+    let token = getToken();
+
+    if (!token) {
+      writeLog("No token found for room creation, attempting to login...");
+      token = await getValidToken();
+    }
+
+    const payload = {
+      language: "javascript",
+      name: "qq",
+    };
+
+    const response = await axios.post(CREATE_ROOM_URL, payload, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        Origin: "https://www.synccode.dev",
+        Referer: "https://www.synccode.dev/",
+      },
+      timeout: 10000,
+    });
+
+    writeLog("✓ Room created successfully");
+    writeLog("Status: " + response.status);
+    writeLog("Room ID: " + response.data.id);
+  } catch (error) {
+    if (error.response && error.response.status === 401) {
+      writeLog("⚠ Token expired during room creation, logging in again...");
+      try {
+        const { getValidToken: refresh } = await import("./login.js");
+        await refresh();
+      } catch (loginError) {
+        writeLog("Failed to refresh token: " + loginError.message);
+      }
+    } else if (error.response) {
+      writeLog("❌ Room Creation Error: " + error.response.status + " - " + JSON.stringify(error.response.data));
+    } else {
+      writeLog("❌ Room Creation Error: " + error.message);
     }
   }
 }
@@ -87,6 +132,7 @@ async function startKeepAlive() {
   writeLog("====================================");
   writeLog("Starting keep-alive service...");
   writeLog("Executing code every 1 second");
+  writeLog("Creating room every 1 second");
   writeLog("====================================");
 
   // Initial login
@@ -99,7 +145,11 @@ async function startKeepAlive() {
 
   // Run immediately, then every 1 second
   await executeCode();
-  setInterval(executeCode, 1000);
+  await createRoom();
+  setInterval(async () => {
+    await executeCode();
+    await createRoom();
+  }, 1000);
 }
 
 startKeepAlive();

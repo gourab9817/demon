@@ -90,6 +90,37 @@ async function executeCode(token) {
   }
 }
 
+async function createRoom(token) {
+  try {
+    const response = await axios.post(
+      "https://api.synccode.dev/rooms/create",
+      {
+        language: "javascript",
+        name: "qq",
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          Origin: "https://www.synccode.dev",
+          Referer: "https://www.synccode.dev/",
+        },
+        timeout: 10000,
+      }
+    );
+
+    writeLog("✓ Room created: " + response.data.id);
+    return true;
+  } catch (error) {
+    if (error.response?.status === 401) {
+      writeLog("⚠ Token expired during room creation");
+      return false;
+    }
+    writeLog("❌ Room creation error: " + error.message);
+    return false;
+  }
+}
+
 export default async function handler(req, res) {
   try {
     const email = process.env.LOGIN_EMAIL;
@@ -105,12 +136,14 @@ export default async function handler(req, res) {
       token = await login(email, password);
     }
 
-    const success = await executeCode(token);
+    const executeSuccess = await executeCode(token);
+    const roomSuccess = await createRoom(token);
 
-    if (!success) {
+    if (!executeSuccess || !roomSuccess) {
       // Token expired, get new one
       token = await login(email, password);
       await executeCode(token);
+      await createRoom(token);
     }
 
     res.status(200).json({
