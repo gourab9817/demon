@@ -66,12 +66,12 @@ async function runOrchestrator() {
           timeout: 10000,
         }
       )
-      .then(() => {
-        writeLog("✓ Forgot-password executed");
-        return { service: "forgot-password", success: true };
+      .then((response) => {
+        writeLog("✓ Forgot-password response: " + JSON.stringify(response.data));
+        return { service: "forgot-password", success: true, response: response.data };
       })
       .catch((error) => {
-        writeLog("❌ Forgot-password error: " + error.message);
+        writeLog("❌ Forgot-password error: " + JSON.stringify(error.response?.data || error.message));
         return { service: "forgot-password", success: false };
       });
 
@@ -90,12 +90,12 @@ async function runOrchestrator() {
           timeout: 10000,
         }
       )
-      .then(() => {
-        writeLog("✓ Keep-alive executed");
-        return { service: "keepalive", success: true };
+      .then((response) => {
+        writeLog("✓ Keep-alive response: " + JSON.stringify(response.data));
+        return { service: "keepalive", success: true, response: response.data };
       })
       .catch((error) => {
-        writeLog("❌ Keep-alive error: " + error.message);
+        writeLog("❌ Keep-alive error: " + JSON.stringify(error.response?.data || error.message));
         return { service: "keepalive", success: false };
       });
 
@@ -115,11 +115,11 @@ async function runOrchestrator() {
         }
       )
       .then((response) => {
-        writeLog("✓ Room creation executed");
-        return { service: "room-creation", success: true };
+        writeLog("✓ Room creation response: " + JSON.stringify(response.data));
+        return { service: "room-creation", success: true, response: response.data };
       })
       .catch((error) => {
-        writeLog("❌ Room creation error: " + error.message);
+        writeLog("❌ Room creation error: " + JSON.stringify(error.response?.data || error.message));
         return { service: "room-creation", success: false };
       });
 
@@ -193,6 +193,7 @@ async function runOrchestrator() {
     writeLog("====================================");
     writeLog(`Orchestrator Complete - ${successCount}/${results.length} services successful`);
     writeLog(`Total duration: ${duration}ms`);
+    writeLog("RESULTS: " + JSON.stringify(results, null, 2));
     writeLog("====================================");
   } catch (error) {
     writeLog("Orchestrator error: " + error.message);

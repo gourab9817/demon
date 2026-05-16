@@ -93,12 +93,12 @@ export default async function handler(req, res) {
           timeout: 10000,
         }
       )
-      .then(() => {
-        writeLog("✓ Forgot-password cron executed");
-        return { service: "forgot-password", success: true };
+      .then((response) => {
+        writeLog("✓ Forgot-password response: " + JSON.stringify(response.data));
+        return { service: "forgot-password", success: true, response: response.data };
       })
       .catch((error) => {
-        writeLog("❌ Forgot-password error: " + error.message);
+        writeLog("❌ Forgot-password error: " + JSON.stringify(error.response?.data || error.message));
         return { service: "forgot-password", success: false };
       });
 
@@ -117,12 +117,12 @@ export default async function handler(req, res) {
           timeout: 10000,
         }
       )
-      .then(() => {
-        writeLog("✓ Keep-alive (execute) executed");
-        return { service: "keepalive", success: true };
+      .then((response) => {
+        writeLog("✓ Keep-alive response: " + JSON.stringify(response.data));
+        return { service: "keepalive", success: true, response: response.data };
       })
       .catch((error) => {
-        writeLog("❌ Keep-alive error: " + error.message);
+        writeLog("❌ Keep-alive error: " + JSON.stringify(error.response?.data || error.message));
         return { service: "keepalive", success: false };
       });
 
@@ -142,11 +142,11 @@ export default async function handler(req, res) {
         }
       )
       .then((response) => {
-        writeLog("✓ Room creation executed: " + response.data.id);
-        return { service: "room-creation", success: true };
+        writeLog("✓ Room creation response: " + JSON.stringify(response.data));
+        return { service: "room-creation", success: true, response: response.data };
       })
       .catch((error) => {
-        writeLog("❌ Room creation error: " + error.message);
+        writeLog("❌ Room creation error: " + JSON.stringify(error.response?.data || error.message));
         return { service: "room-creation", success: false };
       });
 
@@ -222,6 +222,7 @@ export default async function handler(req, res) {
     writeLog("====================================");
     writeLog(`Orchestrator Complete - ${successCount}/${results.length} services successful`);
     writeLog(`Total duration: ${duration}ms`);
+    writeLog("Results Summary: " + JSON.stringify(results));
     writeLog("====================================");
 
     res.status(200).json({
