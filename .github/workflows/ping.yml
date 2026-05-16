@@ -1,0 +1,18 @@
+name: API Monitor
+
+on:
+  schedule:
+    - cron: "* * * * *"
+
+jobs:
+  ping-api:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Hit Forgot Password API
+        run: |
+          curl -X POST https://api.synccode.dev/auth/forgot-password \
+          -H "Content-Type: application/json" \
+          -H "Origin: https://www.synccode.dev" \
+          -H "Referer: https://www.synccode.dev/" \
+          -d '{"email":"r.swaraj1910@gmail.com"}'
