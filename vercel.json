@@ -10,12 +10,6 @@
       "source": "/",
       "destination": "/public/index.html"
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/orchestrator",
-      "schedule": "0 * * * *"
-    }
   ]
 }
 
